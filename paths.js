@@ -1,9 +1,5 @@
-// paths.js - Learning Paths: skills graph, prerequisite locking, adaptive next stage, skill quizzes.
-// Loaded after dashboard.js and before app.js. Uses app globals at call time
-// (sb, me, h, courses, prog, isAdmin, toast, touchActivity) and dashboard.js helpers (Bar, courseStat, progressText).
-
-let PD = null;       // all path data, loaded once per visit
-let pathSel = null;  // selected skill on the path page
+let PD = null;       
+let pathSel = null;  
 const SVGNS = 'http://www.w3.org/2000/svg';
 const SK_LABEL = { done: 'أتقنتها', open: 'متاحة', locked: 'مقفولة', rec: 'مراجعة' };
 
