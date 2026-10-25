@@ -1,7 +1,3 @@
-// dashboard.js - independent UI components for the personal learning dashboard.
-// Loaded BEFORE app.js. Components only read their arguments (or the app globals at call time)
-// and return DOM nodes built with the global helper h().
-
 function courseTotal(c, p) {
   if (c.kind === 'video') return 1;
   if (c.kind === 'lessons') return Array.isArray(c.lessons) ? c.lessons.length : 0;
