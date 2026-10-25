@@ -44,39 +44,3 @@ create table public.progress (
 alter table public.progress enable row level security;
 create policy "own progress" on public.progress for all to authenticated
   using (user_id = auth.uid()) with check (user_id = auth.uid());
-
--- After you sign up on the site, make yourself admin (put your email):
--- insert into public.admins select id from auth.users where email = 'you@example.com';
-
--- v2 (already applied on the cyberlearn project): courses from any platform
--- alter table public.courses add column if not exists lessons jsonb not null default '[]'::jsonb;
--- alter table public.courses alter column yt drop not null;
--- (kind now allows 'lessons'; courses_source_check validates playlist/video/lessons; lessons limited to 300 items / 60KB)
-
--- v3 (already applied on the cyberlearn project): admin-only video uploads from the device
--- storage bucket "videos" (public read, 50MB per file, mp4/webm/ogg) + insert/update/delete policies for admins.
-
--- v4: Telegram lessons need no database change (lessons are stored as {t, p:'telegram', s:'channel/123'} in the existing jsonb column).
-
--- v5 (already applied): the site requires login. Courses are readable only by signed-in users:
--- drop policy "read approved, own or admin" on public.courses;
--- create policy "read approved, own or admin" on public.courses for select to authenticated
---   using (approved or created_by = auth.uid() or public.is_admin());
-
--- v6 (already applied): general course categories (not cybersecurity only)
--- courses_cat_check now allows: dev, design, security, data, biz, lang, science, self, other
--- (old cybersecurity categories were migrated to 'security')
-
--- v7 (already applied): only admins can add courses
--- drop policy "signed-in users submit" on public.courses;
--- create policy "admins add courses" on public.courses for insert to authenticated
---   with check (created_by = auth.uid() and public.is_admin());
-
--- v8 (already applied): learning dashboard
--- progress: + watched text[], total, last_key, last_title, last_pos, last_sec, last_at
--- activity(user_id, day, events) + rpc touch_activity(p_day date)
-
--- v9 (already applied): learning paths
--- tables: paths, skills, path_skills(optional = remedial), skill_prereqs(kind hard|review), skill_courses, questions, skill_results
--- rpc: get_quiz(skill) -> questions without answers; submit_quiz(skill, answers) -> graded on the server (pass >= 67)
--- seed: 3 paths (web, ai, security), 25 skills, 33 prerequisite edges, 75 questions
