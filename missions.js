@@ -1,7 +1,3 @@
-// missions.js - Mission System UI.
-// Grading, hints, scoring and the choice of the next mission all happen on the server (edge function "missions");
-// this file only shows the missions and sends answers. Uses app globals at call time: sb, h, toast, touchActivity.
-
 let MS = null;   // { missions, progress }
 const M_TRACK = { web: 'تطوير الويب', python: 'حل المشكلات (Python)', security: 'تحليل أمني' };
 const M_ERR = {
