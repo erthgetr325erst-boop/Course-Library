@@ -108,7 +108,7 @@ const sb = configured ? window.supabase.createClient(cfg.SUPABASE_URL, cfg.SUPAB
 
 let me = null, isAdmin = false, courses = [], prog = {};
 let filter = 'all', query = '', openId = null, authMode = 'in', confirmDel = false, noteTimer, cleanup = null;
-let activity = {}, view = 'home', pathId = null, lastTouch = 0, courseUi = {};
+let activity = {}, view = 'home', pathId = null, missionId = null, lastTouch = 0, courseUi = {};
 const soonTimers = {};
 
 function h(tag, props, ...kids) {
@@ -180,23 +180,11 @@ function lessonSrc(l) {
 }
 const ALLOW = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen; web-share';
 
-function renderLesson(l) {
-  if (l && l.p === 'telegram') {
-    // Official Telegram post widget: handles sizing and playback inside the page.
-    const s = String(l.s || '');
-    if (!/^[A-Za-z]\w{3,31}\/\d+$/.test(s)) return h('span', null, 'الفيديو ده مش متاح.');
-    const sc = document.createElement('script');
-    sc.async = true;
-    sc.src = 'https://telegram.org/js/telegram-widget.js?22';
-    sc.setAttribute('data-telegram-post', s);
-    sc.setAttribute('data-width', '100%');
-    if (window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches) sc.setAttribute('data-dark', '1');
-    return h('div', { class: 'tgbox' }, sc, h('p', { class: 'meta' }, 'لو الفيديو مش بيشتغل هنا: ',
-      h('a', { href: 'https://t.me/' + s, target: '_blank', rel: 'noopener noreferrer' }, 'افتح البوست في تليجرام')));
-  }
+function renderLesson(l, opts) {
+  if (l && l.p === 'telegram') return TelegramPlayer(l, opts);   // tgimport.js: own player, falls back to Telegram's widget
   if (l && l.p === 'file') {
     const s = String(l.s || '');
-    if (/^https:\/\/.+\.(mp4|webm|ogg|m4v)(\?.*)?$/i.test(s)) return h('video', { controls: '', preload: 'metadata', src: s });
+    if (/^https:\/\/.+\.(mp4|webm|ogg|m4v)(\?.*)?$/i.test(s)) return hookVideo(h('video', { controls: '', playsinline: '', preload: 'metadata', src: s }), opts);
     return h('span', null, 'الفيديو ده مش متاح.');
   }
   const src = lessonSrc(l);
@@ -308,7 +296,11 @@ function lessonsWatch(ls, c) {
   const list = h('div', { class: 'lessons' });
   courseUi.list = list;
   const show = (i, silent) => {
-    stage.textContent = ''; stage.className = 'stage' + (ls[i].p === 'telegram' ? ' tall' : ''); stage.append(renderLesson(ls[i]));
+    stage.textContent = ''; stage.className = 'stage' + (ls[i].p === 'telegram' ? ' tall' : ''); stage.append(renderLesson(ls[i], {
+      start: silent && me ? (p0.last_sec || 0) : 0,
+      onEnded: () => { if (me) setDone(c, String(i), true); },
+      onTime: (sec) => { if (me) { saveProgSoon(c.id, { last_key: String(i), last_title: ls[i].t || 'درس ' + (i + 1), last_pos: i, last_sec: sec, last_at: new Date().toISOString() }); touchActivity(); } },
+    }));
     list.querySelectorAll('.lesson').forEach((b, k) => b.classList.toggle('on', k === i));
     if (me && !silent) {
       saveProgSoon(c.id, { last_key: String(i), last_title: ls[i].t || 'درس ' + (i + 1), last_pos: i, last_sec: 0, last_at: new Date().toISOString() });
@@ -462,6 +454,8 @@ function renderHeader() {
   $('#addBtn').hidden = !isAdmin;
   $('#dashBtn').hidden = !me;
   $('#pathsBtn').hidden = !me;
+  $('#missionsBtn').hidden = !me;
+  $('#importBtn').hidden = !isAdmin;
   $('#authBtn').textContent = me ? 'خروج' : 'دخول';
   $('#authBtn').title = me ? (me.email || '') : '';
 }
@@ -610,6 +604,9 @@ function renderMainInner() {
   if (view === 'dash') { main.append(DashboardView()); return; }
   if (view === 'paths') { main.append(PathsView()); return; }
   if (view === 'path') { main.append(PathView(pathId)); return; }
+  if (view === 'import') { main.append(ImportView()); return; }
+  if (view === 'missions') { main.append(MissionsView()); return; }
+  if (view === 'mission') { main.append(MissionView(missionId)); return; }
   if (openId) {
     const c = courses.find((x) => x.id === openId);
     if (c) { main.append(courseView(c)); return; }
@@ -628,7 +625,9 @@ function route() {
   openId = m ? m[1] : null;
   const mp = location.hash.match(/^#\/path\/([\w-]+)/);
   pathId = mp ? mp[1] : null;
-  view = location.hash === '#/dashboard' ? 'dash' : location.hash === '#/paths' ? 'paths' : mp ? 'path' : 'home';
+  const mm = location.hash.match(/^#\/mission\/([\w-]+)/);
+  missionId = mm ? mm[1] : null;
+  view = location.hash === '#/dashboard' ? 'dash' : location.hash === '#/paths' ? 'paths' : location.hash === '#/import' ? 'import' : location.hash === '#/missions' ? 'missions' : mm ? 'mission' : mp ? 'path' : 'home';
   confirmDel = false;
   const go = () => { renderMain(); renderTracks(); syncTabs(); if (openId || view !== 'home') window.scrollTo({ top: 0, behavior: 'instant' }); };
   if (routed && !reduceMotion && document.startViewTransition) document.startViewTransition(go); else go();
@@ -833,7 +832,7 @@ $('#chatIn').addEventListener('keydown', (e) => {
 
 // ---------------------------------------------------------------- iOS-style tab bar + nav bar
 function syncTabs() {
-  const cur = view === 'dash' ? 'dash' : (view === 'paths' || view === 'path') ? 'paths' : 'home';
+  const cur = view === 'dash' ? 'dash' : (view === 'paths' || view === 'path') ? 'paths' : (view === 'missions' || view === 'mission') ? 'missions' : 'home';
   document.querySelectorAll('#tabbar .tab[data-tab]').forEach((t) => t.setAttribute('aria-current', t.dataset.tab === cur ? 'page' : 'false'));
 }
 $('#tabbar [data-tab=home]').addEventListener('click', () => {

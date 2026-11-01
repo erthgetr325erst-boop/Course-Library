@@ -432,7 +432,7 @@ dialog[open]::backdrop{animation:fadeIn .4s var(--spring)}
   .tabbar{display:flex}
   .tabbar[hidden]{display:none}
   .fab{display:none!important}
-  #pathsBtn,#dashBtn{display:none}
+  #pathsBtn,#dashBtn,#missionsBtn{display:none}
   .wrap{padding-bottom:calc(120px + env(safe-area-inset-bottom))}
   #toast{bottom:calc(92px + env(safe-area-inset-bottom))}
   .tracks{background:none;border:0;box-shadow:none;padding:0;top:auto}
@@ -568,6 +568,41 @@ img,video,iframe,svg{max-width:100%}
   .tab{font-size:10px}
   .tab svg{width:24px;height:24px}
 }
+
+/* ---------- telegram import + native telegram player ---------- */
+.tgnative video{display:block;width:100%;aspect-ratio:16/9;max-height:78vh;background:#000;border-radius:14px}
+.tgload{padding:40px 12px;text-align:center}
+.imp .row>.in{flex:1;min-width:200px}
+.tglist{display:flex;flex-direction:column;gap:6px;max-height:60vh;overflow:auto;margin:12px 0;overscroll-behavior:contain}
+.tgrow{display:flex;gap:10px;align-items:center;min-height:52px;padding:6px 10px;border:1px solid var(--line);border-radius:14px;background:var(--surface);cursor:pointer}
+.tgrow.dim{opacity:.55}
+.tgrow input{width:20px;height:20px;flex:none;accent-color:var(--accent)}
+.tgrow img,.tgrow .ph{width:64px;height:36px;border-radius:8px;object-fit:cover;flex:none}
+.tgt{flex:1;min-width:0;display:flex;flex-direction:column}
+.tgt b{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tagchip{cursor:pointer;background:transparent;font:inherit}
+.imp-form{display:flex;flex-direction:column;gap:10px;margin-top:8px}
+
+/* ---------- missions ---------- */
+.mchecks{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.mchecks li{display:flex;gap:10px;align-items:flex-start;padding:8px 12px;border-radius:12px;background:var(--fill)}
+.mchecks .mk{flex:none;width:22px;text-align:center;color:var(--muted);font-weight:700}
+.mchecks li.ok .mk{color:var(--done)}
+.mchecks li.bad{background:color-mix(in srgb,var(--danger) 14%,transparent)}
+.mchecks li.bad .mk{color:var(--danger)}
+.hintlist{margin:0 0 10px;padding-inline-start:22px;display:flex;flex-direction:column;gap:8px}
+.hintlist:empty{display:none}
+.missv .panel{margin-top:14px}
+.ws{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.ws>div{min-width:0}
+.editor{width:100%;min-height:340px;font:14px/1.6 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;resize:vertical;tab-size:2;white-space:pre}
+.preview{width:100%;min-height:340px;border:1px solid var(--line);border-radius:14px;background:#fff}
+.data{margin:8px 0 14px;padding:12px;max-height:300px;overflow:auto;background:var(--solid);border:1px solid var(--line);border-radius:14px;font:13px/1.6 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;text-align:left;white-space:pre;user-select:text}
+.afields{display:flex;flex-direction:column;gap:12px}
+.afield{display:flex;flex-direction:column;gap:6px}
+.mres{margin-top:16px;display:flex;flex-direction:column;gap:12px}
+.card.locked{opacity:.55;cursor:default}
+@media (max-width:900px){.ws{grid-template-columns:1fr}.editor,.preview{min-height:260px}}
 </style>
 </head>
 <body>
@@ -602,8 +637,10 @@ img,video,iframe,svg{max-width:100%}
     </a>
     <div class="acts">
       <input id="q" class="in" type="search" placeholder="ابحث في الكورسات" aria-label="ابحث في الكورسات">
+      <a id="importBtn" class="btn ghost" href="#/import" hidden>من تليجرام</a>
       <button id="addBtn" class="btn" hidden>أضف كورس</button>
       <a id="pathsBtn" class="btn ghost" href="#/paths" hidden>المسارات</a>
+      <a id="missionsBtn" class="btn ghost" href="#/missions" hidden>المهمات</a>
       <a id="dashBtn" class="btn ghost" href="#/dashboard" hidden>لوحتي</a>
       <button id="authBtn" class="btn ghost">خروج</button>
     </div>
@@ -625,6 +662,7 @@ img,video,iframe,svg{max-width:100%}
 <nav id="tabbar" class="tabbar" aria-label="التنقل الرئيسي" hidden>
   <a class="tab" data-tab="home" href="#/"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11.5 12 4l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg><span>الرئيسية</span></a>
   <a class="tab" data-tab="paths" href="#/paths"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="6" r="2.2"/><circle cx="18" cy="6" r="2.2"/><circle cx="18" cy="18" r="2.2"/><path d="M6 8.2v2.3A3.5 3.5 0 0 0 9.5 14H15M18 8.2v7.6"/></svg><span>المسارات</span></a>
+  <a class="tab" data-tab="missions" href="#/missions"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 21V4M5 5h11l-2 3.5 2 3.5H5"/></svg><span>المهمات</span></a>
   <a class="tab" data-tab="dash" href="#/dashboard"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20v-8M12 20V4M19 20v-5"/></svg><span>لوحتي</span></a>
   <button class="tab" type="button" data-act="chat" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5h16v11H9.5L4 20.5z"/></svg><span>المساعد</span></button>
 </nav>
@@ -678,6 +716,8 @@ img,video,iframe,svg{max-width:100%}
 <script src="config.js"></script>
 <script src="dashboard.js"></script>
 <script src="paths.js"></script>
+<script src="tgimport.js"></script>
+<script src="missions.js"></script>
 <script src="app.js"></script>
 </body>
 </html>
