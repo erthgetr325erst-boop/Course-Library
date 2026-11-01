@@ -1,7 +1,3 @@
-// tgimport.js - Telegram channel import (admin) + in-browser player for Telegram lessons.
-// Loaded after paths.js and before app.js. Uses app globals at call time: sb, h, me, isAdmin, toast, CATS, loadAll.
-// The channel must be PUBLIC (it needs a username). Reading goes through the "tg" edge function on the server.
-
 const TG_KIND = { video: 'فيديو', round: 'فيديو دائري', photo: 'صورة', document: 'ملف', audio: 'صوت', text: 'نص' };
 const TG_ERR = {
   admin_only: 'الصفحة دي للأدمن بس.',
