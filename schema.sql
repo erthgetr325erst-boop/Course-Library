@@ -1,5 +1,3 @@
--- CyberLearn schema. Run once in Supabase: SQL Editor -> New query -> paste -> Run.
-
 create table public.admins (
   user_id uuid primary key references auth.users on delete cascade
 );
