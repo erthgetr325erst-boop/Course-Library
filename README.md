@@ -1,4 +1,4 @@
-# 📚 Cyberlearn — Course Library
+# 📚 Course Library
 
 Welcome to **Cyberlearn Course Library**, a collection of learning resources designed to help learners explore programming, cybersecurity, artificial intelligence, and other technical fields.
 
